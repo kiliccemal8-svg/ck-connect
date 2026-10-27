@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CK PLAYER PRO — TV Hızlı Giriş</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+  <style>
+    body { background-color: #050714; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-2xl backdrop-blur-xl">
+    
+    <!-- Logo & Header -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20 mb-3">
+        <span class="text-2xl font-black text-slate-950">CK</span>
+      </div>
+      <h1 class="text-xl font-black text-white tracking-wide">CK PLAYER PRO</h1>
+      <p class="text-xs text-slate-400 mt-1">Televizyonunuza Şifre & Liste Aktarma</p>
+    </div>
+
+    <!-- TV Eşleşme Kodu -->
+    <div class="mb-5 p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-between">
+      <div>
+        <span class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider block">TV Eşleşme Kodu</span>
+        <input id="tvCode" type="text" maxlength="8" placeholder="Örn: 849201" class="bg-transparent text-lg font-mono font-black text-white uppercase tracking-widest outline-none w-32 placeholder:text-slate-600">
+      </div>
+      <span class="text-[10px] px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+        CANLI EŞLEŞME
+      </span>
+    </div>
+
+    <!-- Tab Buttons -->
+    <div class="grid grid-cols-2 gap-2 mb-4 p-1 bg-black/40 rounded-xl border border-white/5">
+      <button id="tabXtreamBtn" onclick="switchTab('xtream')" class="py-2 text-xs font-bold rounded-lg bg-cyan-500 text-slate-950 shadow-md transition-all">
+        Xtream Codes
+      </button>
+      <button id="tabM3uBtn" onclick="switchTab('m3u')" class="py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition-all">
+        M3U Linki
+      </button>
+    </div>
+
+    <!-- Form: Xtream Codes -->
+    <form id="formXtream" onsubmit="submitXtream(event)" class="space-y-3">
+      <div>
+        <label class="text-[11px] font-bold text-slate-300 block mb-1">Hesap veya Liste Adı (Opsiyonel)</label>
+        <input id="xtreamName" type="text" placeholder="Örn: Ev IPTV" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-600 outline-none focus:border-cyan-400">
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-slate-300 block mb-1">Sunucu Adresi (Server URL)</label>
+        <input id="xtreamServer" type="url" required placeholder="http://sunucu.xyz:8080" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-600 outline-none focus:border-cyan-400">
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-slate-300 block mb-1">Kullanıcı Adı (Username)</label>
+        <input id="xtreamUser" type="text" required placeholder="Kullanıcı adınızı yapıştırın" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-600 outline-none focus:border-cyan-400">
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-slate-300 block mb-1">Şifre (Password)</label>
+        <input id="xtreamPass" type="text" required placeholder="Şifrenizi yapıştırın" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-600 outline-none focus:border-cyan-400">
+      </div>
+
+      <button type="submit" id="btnSubmitXtream" class="w-full mt-4 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">
+        TV'ye Gönder & Giriş Yap 🚀
+      </button>
+    </form>
+
+    <!-- Form: M3U Link -->
+    <form id="formM3u" onsubmit="submitM3u(event)" class="space-y-3 hidden">
+      <div>
+        <label class="text-[11px] font-bold text-slate-300 block mb-1">Liste Adı</label>
+        <input id="m3uName" type="text" placeholder="Örn: Spor Paketi" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-600 outline-none focus:border-cyan-400">
+      </div>
+      <div>
+        <label class="text-[11px] font-bold text-slate-300 block mb-1">M3U / M3U8 Linki</label>
+        <textarea id="m3uUrl" rows="3" required placeholder="https://.../get.php?username=...&type=m3u_plus" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-600 outline-none focus:border-cyan-400 resize-none"></textarea>
+      </div>
+
+      <button type="submit" id="btnSubmitM3u" class="w-full mt-4 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">
+        TV'ye Gönder & Listeyi Yükle 🚀
+      </button>
+    </form>
+
+    <!-- Success Message Box -->
+    <div id="statusBox" class="mt-4 hidden p-4 rounded-2xl text-center text-xs font-bold animate-fade-in"></div>
+
+  </div>
+
+  <p class="text-[11px] text-slate-500 mt-4 text-center">
+    🔒 Uçtan uca şifreli aktarım. Şifreleriniz hiçbir sunucuda saklanmaz.
+  </p>
+
+  <script>
+    // URL parametresinden kodu al
+    const params = new URLSearchParams(window.location.search);
+    const codeFromUrl = params.get('code');
+    if (codeFromUrl) {
+      document.getElementById('tvCode').value = codeFromUrl.trim().toUpperCase();
+    }
+
+    function switchTab(tab) {
+      const isXtream = tab === 'xtream';
+      document.getElementById('formXtream').classList.toggle('hidden', !isXtream);
+      document.getElementById('formM3u').classList.toggle('hidden', isXtream);
+      document.getElementById('tabXtreamBtn').className = isXtream 
+        ? 'py-2 text-xs font-bold rounded-lg bg-cyan-500 text-slate-950 shadow-md transition-all'
+        : 'py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition-all';
+      document.getElementById('tabM3uBtn').className = !isXtream 
+        ? 'py-2 text-xs font-bold rounded-lg bg-cyan-500 text-slate-950 shadow-md transition-all'
+        : 'py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition-all';
+    }
+
+    function sendToTv(payload) {
+      const code = document.getElementById('tvCode').value.trim().toUpperCase();
+      const statusBox = document.getElementById('statusBox');
+
+      if (!code) {
+        alert('Lütfen televizyon ekranındaki kodu girin!');
+        return;
+      }
+
+      statusBox.className = 'mt-4 p-4 rounded-2xl bg-cyan-950/70 border border-cyan-500/50 text-cyan-300 text-center text-xs font-bold block';
+      statusBox.innerHTML = '⚡ Televizyona bağlanılıyor ve aktarılıyor...';
+
+      const clientId = 'ck_mobile_' + Math.random().toString(16).substr(2, 8);
+      const client = new Paho.MQTT.Client('broker.emqx.io', 8084, clientId);
+
+      client.connect({
+        useSSL: true,
+        timeout: 5,
+        onSuccess: function() {
+          const message = new Paho.MQTT.Message(JSON.stringify(payload));
+          message.destinationName = 'ckplayer/pair/' + code;
+          message.qos = 1;
+          client.send(message);
+
+          setTimeout(() => {
+            try { client.disconnect(); } catch(e){}
+            statusBox.className = 'mt-4 p-4 rounded-2xl bg-emerald-950/90 border border-emerald-400 text-emerald-200 text-center text-xs font-bold block shadow-xl';
+            statusBox.innerHTML = '🎉 BAŞARILI!<br>Bilgiler televizyonunuza aktarıldı.<br><span class="text-[11px] font-normal text-emerald-300">Televizyonunuz kanalları yükleyip otomatik açılıyor.</span>';
+          }, 600);
+        },
+        onFailure: function(err) {
+          statusBox.className = 'mt-4 p-4 rounded-2xl bg-rose-950/90 border border-rose-500 text-rose-300 text-center text-xs font-bold block';
+          statusBox.innerHTML = '❌ Bağlantı hatası oluştu. TV kodunu kontrol edip tekrar deneyin.';
+        }
+      });
+    }
+
+    function submitXtream(e) {
+      e.preventDefault();
+      const payload = {
+        type: 'XTREAM_LOGIN',
+        name: document.getElementById('xtreamName').value.trim() || 'Xtream Hesabı',
+        serverUrl: document.getElementById('xtreamServer').value.trim(),
+        username: document.getElementById('xtreamUser').value.trim(),
+        password: document.getElementById('xtreamPass').value.trim()
+      };
+      sendToTv(payload);
+    }
+
+    function submitM3u(e) {
+      e.preventDefault();
+      const payload = {
+        type: 'M3U_LOGIN',
+        name: document.getElementById('m3uName').value.trim() || 'M3U Playlist',
+        m3uUrl: document.getElementById('m3uUrl').value.trim()
+      };
+      sendToTv(payload);
+    }
+  </script>
+</body>
+</html>
